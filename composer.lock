@@ -1,0 +1,85 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "fbab0925563dacc1a5fc7527f6ed8370",
+    "packages": [
+        {
+            "name": "plaud/plaud-php",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/EmirBakkal0/plaud-retrieval-php.git",
+                "reference": "fbf446988f42d88a3fc8c4603410606d82f19b08"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/EmirBakkal0/plaud-retrieval-php/zipball/fbf446988f42d88a3fc8c4603410606d82f19b08",
+                "reference": "fbf446988f42d88a3fc8c4603410606d82f19b08",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-json": "*",
+                "php": ">=8.1"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^10.0 || ^11.0"
+            },
+            "suggest": {
+                "guzzlehttp/guzzle": "Allows using Guzzle as the underlying HTTP client (>=7.0)"
+            },
+            "default-branch": true,
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Plaud\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Plaud\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Iceberg X Team Alpha",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Unofficial framework-agnostic PHP SDK for retrieving transcripts, recordings, and audio from Plaud.ai",
+            "keywords": [
+                "api-client",
+                "audio",
+                "plaud",
+                "plaud-ai",
+                "recording",
+                "sdk",
+                "transcript"
+            ],
+            "support": {
+                "source": "https://github.com/EmirBakkal0/plaud-retrieval-php/tree/master",
+                "issues": "https://github.com/EmirBakkal0/plaud-retrieval-php/issues"
+            },
+            "time": "2026-08-15T13:39:18+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "dev",
+    "stability-flags": {
+        "plaud/plaud-php": 20
+    },
+    "prefer-stable": true,
+    "prefer-lowest": false,
+    "platform": {
+        "php": ">=8.1"
+    },
+    "platform-dev": {},
+    "plugin-api-version": "2.9.0"
+}

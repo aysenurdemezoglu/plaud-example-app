@@ -1,0 +1,22 @@
+{
+    "name": "plaud/example-app",
+    "description": "Example PHP web application using the Plaud Composer package",
+    "type": "project",
+    "require": {
+        "php": ">=8.1",
+        "plaud/plaud-php": "dev-master"
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/EmirBakkal0/plaud-retrieval-php.git"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "PlaudExample\\": "src/"
+        }
+    }
+}
