@@ -3,9 +3,9 @@ import vue from "@vitejs/plugin-vue";
 
 export default defineConfig(({ command }) => ({
   plugins: [vue()],
-  base: command === 'build' ? '/app/' : '/',
+  base: command === "build" ? "/app/" : "/",
   build: {
-    outDir: '../public/app',
+    outDir: "../public/app",
     emptyOutDir: true,
   },
   server: {

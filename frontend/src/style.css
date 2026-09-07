@@ -448,6 +448,21 @@ button {
     white-space: pre-wrap;
 }
 
+.rich-text p {
+    margin: 0 0 22px;
+}
+
+.rich-text p:last-child {
+    margin-bottom: 0;
+}
+
+.content-empty {
+    padding-top: 25px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.85;
+}
+
 @media (max-width: 700px) {
     .shell {
         width: min(100% - 32px, 540px);

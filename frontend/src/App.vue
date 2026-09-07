@@ -14,6 +14,13 @@ const searchQuery = ref('')
 const sortOrder = ref('newest')
 
 const isDetail = computed(() => selectedRecording.value !== null)
+const transcriptParagraphs = computed(() => splitContent(selectedRecording.value?.transcript))
+const summaryParagraphs = computed(() => splitContent(selectedRecording.value?.summary))
+
+function splitContent(content) {
+  if (!content) return []
+  return content.replace(/\r\n/g, '\n').split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean)
+}
 const visibleRecordings = computed(() => {
   const query = searchQuery.value.trim().toLocaleLowerCase()
   const filtered = recordings.value.filter((recording) => recording.filename.toLocaleLowerCase().includes(query))
@@ -174,11 +181,17 @@ onMounted(async () => {
       <section v-if="isDetail && selectedRecording" class="content-grid" aria-label="Recording content">
         <article class="content-panel">
           <div class="section-heading"><div><span class="panel-kicker">Transcript</span><span class="content-state">{{ selectedRecording.transcript ? 'Available' : 'Not available' }}</span></div><button v-if="selectedRecording.transcript" class="text-button" type="button" @click="copyText('transcript', selectedRecording.transcript)">{{ copiedSection === 'transcript' ? 'Copied' : 'Copy' }}</button></div>
-          <div class="rich-text">{{ selectedRecording.transcript || 'No transcript is available for this recording.' }}</div>
+          <div v-if="transcriptParagraphs.length" class="rich-text">
+            <p v-for="(paragraph, index) in transcriptParagraphs" :key="`transcript-${index}`">{{ paragraph }}</p>
+          </div>
+          <p v-else class="content-empty">No transcript is available for this recording.</p>
         </article>
         <article class="content-panel summary-panel">
           <div class="section-heading"><div><span class="panel-kicker">Summary</span><span class="content-state">{{ selectedRecording.summary ? 'Available' : 'Not available' }}</span></div><button v-if="selectedRecording.summary" class="text-button" type="button" @click="copyText('summary', selectedRecording.summary)">{{ copiedSection === 'summary' ? 'Copied' : 'Copy' }}</button></div>
-          <div class="rich-text">{{ selectedRecording.summary || 'No summary is available for this recording.' }}</div>
+          <div v-if="summaryParagraphs.length" class="rich-text">
+            <p v-for="(paragraph, index) in summaryParagraphs" :key="`summary-${index}`">{{ paragraph }}</p>
+          </div>
+          <p v-else class="content-empty">No summary is available for this recording.</p>
         </article>
       </section>
 
