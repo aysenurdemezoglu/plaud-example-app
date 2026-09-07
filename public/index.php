@@ -106,6 +106,15 @@ if (str_starts_with($path, '/api/')) {
             jsonResponse(['recordings' => $items]);
         }
 
+        if (preg_match('#^/api/recordings/([^/]+)/audio-url$#', $path, $matches) === 1 && $_SERVER['REQUEST_METHOD'] === 'GET') {
+            $audioUrl = $client->getMp3Url(urldecode($matches[1]));
+            if ($audioUrl === null) {
+                jsonResponse(['message' => 'Audio URL is not available.'], 404);
+            }
+
+            jsonResponse(['audioUrl' => $audioUrl]);
+        }
+
         if (preg_match('#^/api/recordings/([^/]+)$#', $path, $matches) === 1 && $_SERVER['REQUEST_METHOD'] === 'GET') {
             $recording = $client->getRecording(urldecode($matches[1]));
             jsonResponse(['recording' => [

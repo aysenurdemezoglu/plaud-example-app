@@ -388,6 +388,37 @@ button {
     font-size: 12px;
 }
 
+.audio-panel {
+    max-width: 720px;
+    margin-top: 30px;
+    padding: 18px 20px;
+    border: 1px solid var(--line);
+    background: rgba(251, 250, 246, .7);
+}
+
+.audio-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 14px;
+}
+
+.audio-heading .panel-kicker {
+    margin: 0;
+}
+
+.audio-panel audio {
+    display: block;
+    width: 100%;
+    height: 38px;
+}
+
+.audio-message {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+
 .content-grid {
     display: grid;
     grid-template-columns: 1.35fr .65fr;

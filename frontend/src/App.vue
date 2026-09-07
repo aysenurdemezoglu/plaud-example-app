@@ -12,6 +12,9 @@ const error = ref('')
 const copiedSection = ref('')
 const searchQuery = ref('')
 const sortOrder = ref('newest')
+const audioUrl = ref('')
+const audioLoading = ref(false)
+const audioError = ref('')
 
 const isDetail = computed(() => selectedRecording.value !== null)
 const transcriptParagraphs = computed(() => splitContent(selectedRecording.value?.transcript))
@@ -81,12 +84,25 @@ async function connect() {
 async function openRecording(id) {
   loading.value = true
   error.value = ''
+  audioUrl.value = ''
+  audioError.value = ''
+  audioLoading.value = true
   try {
     const data = await request(`/api/recordings/${encodeURIComponent(id)}`)
     selectedRecording.value = data.recording
     window.history.pushState({ id }, '', `/?id=${encodeURIComponent(id)}`)
+
+    try {
+      const audio = await request(`/api/recordings/${encodeURIComponent(id)}/audio-url`)
+      audioUrl.value = audio.audioUrl
+    } catch (audioRequestError) {
+      audioError.value = audioRequestError.message
+    } finally {
+      audioLoading.value = false
+    }
   } catch (requestError) {
     error.value = requestError.message
+    audioLoading.value = false
   } finally {
     loading.value = false
   }
@@ -95,6 +111,8 @@ async function openRecording(id) {
 function closeDetail() {
   selectedRecording.value = null
   copiedSection.value = ''
+  audioUrl.value = ''
+  audioError.value = ''
   window.history.pushState({}, '', '/')
 }
 
@@ -112,6 +130,8 @@ async function disconnect() {
   connected.value = false
   recordings.value = []
   selectedRecording.value = null
+  audioUrl.value = ''
+  audioError.value = ''
   email.value = ''
   error.value = ''
 }
@@ -175,6 +195,12 @@ onMounted(async () => {
         <div class="detail-stats" aria-label="Recording content summary">
           <span><strong>{{ selectedRecording.transcript ? selectedRecording.transcript.length.toLocaleString() : 0 }}</strong> transcript characters</span>
           <span><strong>{{ selectedRecording.summary ? 'Ready' : 'None' }}</strong> summary</span>
+        </div>
+        <div class="audio-panel" aria-label="Recording audio">
+          <div class="audio-heading"><span class="panel-kicker">Audio</span><span class="content-state">{{ audioLoading ? 'Loading' : audioUrl ? 'Ready' : 'Unavailable' }}</span></div>
+          <audio v-if="audioUrl" :src="audioUrl" controls preload="none"></audio>
+          <p v-else-if="audioLoading" class="audio-message">Preparing the audio player...</p>
+          <p v-else class="audio-message">{{ audioError || 'Audio is not available for this recording.' }}</p>
         </div>
       </section>
 
