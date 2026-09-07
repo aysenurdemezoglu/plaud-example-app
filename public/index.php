@@ -55,6 +55,82 @@ function createClient(FileTokenStorage $storage, string $region): PlaudClient
     return PlaudClient::create($config, $storage);
 }
 
+function jsonResponse(array $payload, int $status = 200): never
+{
+    http_response_code($status);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+function requireApiConnection(): void
+{
+    if (empty($_SESSION['plaud_connected'])) {
+        jsonResponse(['message' => 'Plaud connection required.'], 401);
+    }
+}
+
+if (str_starts_with($path, '/api/')) {
+    try {
+        if ($path === '/api/connect' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            $email = trim((string) ($_POST['email'] ?? ''));
+            $password = (string) ($_POST['password'] ?? '');
+            if ($email === '' || $password === '') {
+                jsonResponse(['message' => 'Email and password are required.'], 422);
+            }
+
+            $_SESSION['plaud_email'] = $email;
+            $_SESSION['plaud_password'] = $password;
+            createClient($tokenStorage, $region)->listRecordings();
+            $_SESSION['plaud_connected'] = true;
+            jsonResponse(['connected' => true]);
+        }
+
+        if ($path === '/api/logout' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            $tokenStorage->clearToken();
+            $_SESSION = [];
+            session_destroy();
+            jsonResponse(['connected' => false]);
+        }
+
+        requireApiConnection();
+        $client = createClient($tokenStorage, $region);
+
+        if ($path === '/api/recordings' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+            $items = array_map(static fn (Recording $recording): array => [
+                'id' => $recording->id,
+                'filename' => $recording->filename,
+                'date' => $recording->getFormattedStartDate('M j, Y / H:i'),
+                'durationMinutes' => $recording->getDurationMinutes(),
+            ], $client->listRecordings());
+            jsonResponse(['recordings' => $items]);
+        }
+
+        if (preg_match('#^/api/recordings/([^/]+)$#', $path, $matches) === 1 && $_SERVER['REQUEST_METHOD'] === 'GET') {
+            $recording = $client->getRecording(urldecode($matches[1]));
+            jsonResponse(['recording' => [
+                'id' => $recording->id,
+                'filename' => $recording->filename,
+                'date' => $recording->getFormattedStartDate('M j, Y / H:i'),
+                'durationMinutes' => $recording->getDurationMinutes(),
+                'transcript' => $recording->transcript,
+                'summary' => $recording->summary,
+            ]]);
+        }
+
+        jsonResponse(['message' => 'API route not found.'], 404);
+    } catch (Throwable $exception) {
+        if ($exception instanceof \Plaud\Exceptions\AuthenticationException) {
+            unset($_SESSION['plaud_connected']);
+        }
+        if ($path === '/api/connect') {
+            unset($_SESSION['plaud_email'], $_SESSION['plaud_password'], $_SESSION['plaud_connected']);
+        }
+        $status = $exception instanceof \Plaud\Exceptions\AuthenticationException ? 401 : 500;
+        jsonResponse(['message' => $exception instanceof PlaudException ? $exception->getMessage() : 'Unable to load Plaud data.'], $status);
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $path === '/connect') {
     $email = trim((string) ($_POST['email'] ?? ''));
     $password = (string) ($_POST['password'] ?? '');
