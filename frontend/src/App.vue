@@ -10,8 +10,22 @@ const loading = ref(true)
 const submitting = ref(false)
 const error = ref('')
 const copiedSection = ref('')
+const searchQuery = ref('')
+const sortOrder = ref('newest')
 
 const isDetail = computed(() => selectedRecording.value !== null)
+const visibleRecordings = computed(() => {
+  const query = searchQuery.value.trim().toLocaleLowerCase()
+  const filtered = recordings.value.filter((recording) => recording.filename.toLocaleLowerCase().includes(query))
+
+  return [...filtered].sort((first, second) => {
+    if (sortOrder.value === 'duration') return second.durationMinutes - first.durationMinutes
+
+    const firstDate = Date.parse(first.date.replace(' / ', ' ')) || 0
+    const secondDate = Date.parse(second.date.replace(' / ', ' ')) || 0
+    return sortOrder.value === 'oldest' ? firstDate - secondDate : secondDate - firstDate
+  })
+})
 
 async function request(path, options = {}) {
   const response = await fetch(path, {
@@ -173,10 +187,16 @@ onMounted(async () => {
           <div><p class="eyebrow">Plaud workspace</p><h1>Recordings</h1><p class="hero-copy">A focused view of your recent conversations.</p></div>
           <button class="secondary-button" type="button" @click="disconnect">Disconnect</button>
         </section>
+        <section class="recording-tools" aria-label="Recording filters">
+          <label class="search-field"><span>Search recordings</span><input v-model="searchQuery" type="search" placeholder="Search by title" /></label>
+          <label class="sort-field"><span>Sort by</span><select v-model="sortOrder"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="duration">Longest first</option></select></label>
+          <span class="result-count">{{ visibleRecordings.length }} of {{ recordings.length }} recordings</span>
+        </section>
         <section class="recording-list" aria-label="Recordings">
           <div v-if="loading" class="empty-state"><h2>Loading recordings</h2><p>Fetching your Plaud workspace.</p></div>
           <div v-else-if="recordings.length === 0" class="empty-state"><h2>No recordings yet</h2><p>Your active Plaud recordings will appear here.</p></div>
-          <button v-for="recording in recordings" v-else :key="recording.id" class="recording-row" type="button" @click="openRecording(recording.id)">
+          <div v-else-if="visibleRecordings.length === 0" class="empty-state"><h2>No matching recordings</h2><p>Try a different title or clear the search.</p></div>
+          <button v-for="recording in visibleRecordings" v-else :key="recording.id" class="recording-row" type="button" @click="openRecording(recording.id)">
             <span class="recording-index">&#8599;</span><span class="recording-title"><strong>{{ recording.filename }}</strong><small>{{ recording.date || 'Undated recording' }}</small></span><span class="recording-duration">{{ recording.durationMinutes }} min</span><span aria-hidden="true">&rarr;</span>
           </button>
         </section>

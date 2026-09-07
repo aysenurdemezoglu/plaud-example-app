@@ -225,6 +225,48 @@ button {
     margin-top: 20px;
 }
 
+.recording-tools {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) 190px auto;
+    gap: 22px;
+    align-items: end;
+    margin-bottom: 24px;
+}
+
+.search-field,
+.sort-field {
+    gap: 8px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 400;
+    text-transform: uppercase;
+}
+
+.search-field input,
+.sort-field select {
+    min-height: 42px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    background: var(--cream);
+    color: var(--ink);
+    font-family: Manrope, sans-serif;
+    font-size: 13px;
+}
+
+.sort-field select {
+    width: 100%;
+}
+
+.result-count {
+    padding-bottom: 13px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
 .secondary-button {
     margin: 0;
     padding: 11px 15px;
@@ -372,7 +414,7 @@ button {
     border-bottom: 1px solid var(--line);
 }
 
-.section-heading > div {
+.section-heading>div {
     display: grid;
     gap: 8px;
 }
@@ -438,6 +480,16 @@ button {
         align-items: flex-start;
         flex-direction: column;
         padding: 60px 0 35px;
+    }
+
+    .recording-tools {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        margin-bottom: 24px;
+    }
+
+    .result-count {
+        padding-bottom: 0;
     }
 
     .recording-row {
