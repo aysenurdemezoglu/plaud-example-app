@@ -131,6 +131,12 @@ if (str_starts_with($path, '/api/')) {
     }
 }
 
+$frontendIndex = $root . '/public/app/index.html';
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($path === '/' || $path === '/index.html') && is_file($frontendIndex)) {
+    readfile($frontendIndex);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $path === '/connect') {
     $email = trim((string) ($_POST['email'] ?? ''));
     $password = (string) ($_POST['password'] ?? '');

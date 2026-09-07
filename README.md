@@ -39,4 +39,15 @@ php -S 127.0.0.1:8080 -t public
 
 Open the Vite URL shown in the terminal, usually <http://localhost:5173>.
 
+For a single-server production-style run, build Vue into the PHP public directory:
+
+```bash
+cd frontend
+npm run build
+cd ..
+php -S 127.0.0.1:8080 -t public
+```
+
+Then open <http://127.0.0.1:8080>. The PHP fallback remains available until the Vue build exists.
+
 OAuth support will be added after Plaud provides private-beta access and endpoint details.
