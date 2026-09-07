@@ -330,6 +330,22 @@ button {
     text-transform: uppercase;
 }
 
+.detail-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    margin-top: 28px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.detail-stats strong {
+    color: var(--ink);
+    font-size: 12px;
+}
+
 .content-grid {
     display: grid;
     grid-template-columns: 1.35fr .65fr;
@@ -354,6 +370,25 @@ button {
     gap: 20px;
     padding-bottom: 22px;
     border-bottom: 1px solid var(--line);
+}
+
+.section-heading > div {
+    display: grid;
+    gap: 8px;
+}
+
+.text-button {
+    align-self: start;
+    padding: 0;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.text-button:hover {
+    color: var(--ink);
 }
 
 .content-state {

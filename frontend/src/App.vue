@@ -9,6 +9,7 @@ const selectedRecording = ref(null)
 const loading = ref(true)
 const submitting = ref(false)
 const error = ref('')
+const copiedSection = ref('')
 
 const isDetail = computed(() => selectedRecording.value !== null)
 
@@ -72,7 +73,17 @@ async function openRecording(id) {
 
 function closeDetail() {
   selectedRecording.value = null
+  copiedSection.value = ''
   window.history.pushState({}, '', '/')
+}
+
+async function copyText(section, text) {
+  if (!text || !navigator.clipboard) return
+  await navigator.clipboard.writeText(text)
+  copiedSection.value = section
+  window.setTimeout(() => {
+    if (copiedSection.value === section) copiedSection.value = ''
+  }, 1600)
 }
 
 async function disconnect() {
@@ -140,15 +151,19 @@ onMounted(async () => {
         <p class="eyebrow">Recording detail</p>
         <h1>{{ selectedRecording.filename }}</h1>
         <p class="detail-meta">{{ selectedRecording.date || 'Undated recording' }} &middot; {{ selectedRecording.durationMinutes }} min</p>
+        <div class="detail-stats" aria-label="Recording content summary">
+          <span><strong>{{ selectedRecording.transcript ? selectedRecording.transcript.length.toLocaleString() : 0 }}</strong> transcript characters</span>
+          <span><strong>{{ selectedRecording.summary ? 'Ready' : 'None' }}</strong> summary</span>
+        </div>
       </section>
 
       <section v-if="isDetail && selectedRecording" class="content-grid" aria-label="Recording content">
         <article class="content-panel">
-          <div class="section-heading"><span class="panel-kicker">Transcript</span><span class="content-state">{{ selectedRecording.transcript ? 'Available' : 'Not available' }}</span></div>
+          <div class="section-heading"><div><span class="panel-kicker">Transcript</span><span class="content-state">{{ selectedRecording.transcript ? 'Available' : 'Not available' }}</span></div><button v-if="selectedRecording.transcript" class="text-button" type="button" @click="copyText('transcript', selectedRecording.transcript)">{{ copiedSection === 'transcript' ? 'Copied' : 'Copy' }}</button></div>
           <div class="rich-text">{{ selectedRecording.transcript || 'No transcript is available for this recording.' }}</div>
         </article>
         <article class="content-panel summary-panel">
-          <div class="section-heading"><span class="panel-kicker">Summary</span><span class="content-state">{{ selectedRecording.summary ? 'Available' : 'Not available' }}</span></div>
+          <div class="section-heading"><div><span class="panel-kicker">Summary</span><span class="content-state">{{ selectedRecording.summary ? 'Available' : 'Not available' }}</span></div><button v-if="selectedRecording.summary" class="text-button" type="button" @click="copyText('summary', selectedRecording.summary)">{{ copiedSection === 'summary' ? 'Copied' : 'Copy' }}</button></div>
           <div class="rich-text">{{ selectedRecording.summary || 'No summary is available for this recording.' }}</div>
         </article>
       </section>
