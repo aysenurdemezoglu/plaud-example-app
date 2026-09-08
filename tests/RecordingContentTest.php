@@ -47,4 +47,21 @@ final class RecordingContentTest extends TestCase
 
         self::assertNull(RecordingContent::resolveSummary($recording));
     }
+
+    public function testPrioritizesConsumerSummaryLink(): void
+    {
+        $recording = RecordingDetail::fromArray([
+            'file_id' => 'recording-4',
+            'content_list' => [
+                ['data_type' => 'auto_sum_note', 'data_link' => 'https://example.test/auto-summary'],
+                ['data_type' => 'transaction', 'data_link' => 'https://example.test/transcript'],
+                ['data_type' => 'consumer_note', 'data_link' => 'https://example.test/consumer-summary'],
+            ],
+        ]);
+
+        self::assertSame(
+            ['https://example.test/consumer-summary', 'https://example.test/auto-summary'],
+            RecordingContent::summaryLinks($recording)
+        );
+    }
 }

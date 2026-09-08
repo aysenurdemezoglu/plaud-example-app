@@ -15,6 +15,8 @@ const sortOrder = ref('newest')
 const audioUrl = ref('')
 const audioLoading = ref(false)
 const audioError = ref('')
+const audioDuration = ref(0)
+const audioCurrentTime = ref(0)
 
 const isDetail = computed(() => selectedRecording.value !== null)
 const transcriptBlocks = computed(() => formatContent(selectedRecording.value?.transcript))
@@ -66,6 +68,28 @@ function cleanMarkdown(text) {
     .replace(/__(.+?)__/g, '$1')
     .replace(/`(.+?)`/g, '$1')
     .trim()
+}
+
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) return '00:00'
+  const minutes = Math.floor(seconds / 60)
+  const remainder = Math.floor(seconds % 60)
+  return `${String(minutes).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`
+}
+
+function handleAudioLoaded(event) {
+  audioDuration.value = event.target.duration
+  audioLoading.value = false
+  audioError.value = ''
+}
+
+function handleAudioTimeUpdate(event) {
+  audioCurrentTime.value = event.target.currentTime
+}
+
+function handleAudioError() {
+  audioLoading.value = false
+  audioError.value = 'The audio could not be played. The temporary URL may have expired.'
 }
 const visibleRecordings = computed(() => {
   const query = searchQuery.value.trim().toLocaleLowerCase()
@@ -129,6 +153,8 @@ async function openRecording(id) {
   error.value = ''
   audioUrl.value = ''
   audioError.value = ''
+  audioDuration.value = 0
+  audioCurrentTime.value = 0
   audioLoading.value = true
   try {
     const data = await request(`/api/recordings/${encodeURIComponent(id)}`)
@@ -156,6 +182,8 @@ function closeDetail() {
   copiedSection.value = ''
   audioUrl.value = ''
   audioError.value = ''
+  audioDuration.value = 0
+  audioCurrentTime.value = 0
   window.history.pushState({}, '', '/')
 }
 
@@ -241,9 +269,11 @@ onMounted(async () => {
         </div>
         <div class="audio-panel" aria-label="Recording audio">
           <div class="audio-heading"><span class="panel-kicker">Audio</span><span class="content-state">{{ audioLoading ? 'Loading' : audioUrl ? 'Ready' : 'Unavailable' }}</span></div>
-          <audio v-if="audioUrl" :src="audioUrl" controls preload="none"></audio>
+          <audio v-if="audioUrl" :src="audioUrl" controls preload="metadata" @loadedmetadata="handleAudioLoaded" @timeupdate="handleAudioTimeUpdate" @error="handleAudioError"></audio>
+          <div v-if="audioUrl && !audioError" class="audio-time" aria-live="polite"><span>{{ formatTime(audioCurrentTime) }}</span><span>{{ formatTime(audioDuration) }}</span></div>
           <p v-else-if="audioLoading" class="audio-message">Preparing the audio player...</p>
           <p v-else class="audio-message">{{ audioError || 'Audio is not available for this recording.' }}</p>
+          <p v-if="audioUrl && audioError" class="audio-message audio-error">{{ audioError }}</p>
         </div>
       </section>
 

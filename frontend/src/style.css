@@ -413,10 +413,24 @@ button {
     height: 38px;
 }
 
+.audio-time {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+}
+
 .audio-message {
     margin: 0;
     color: var(--muted);
     font-size: 12px;
+}
+
+.audio-error {
+    margin-top: 10px;
+    color: #9a5039;
 }
 
 .content-grid {
@@ -580,5 +594,15 @@ button {
     .content-panel {
         min-height: 0;
         padding: 22px;
+    }
+
+    .audio-panel {
+        width: 100%;
+        margin-top: 24px;
+        padding: 16px;
+    }
+
+    .audio-panel audio {
+        min-width: 0;
     }
 }

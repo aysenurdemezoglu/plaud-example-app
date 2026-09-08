@@ -48,6 +48,30 @@ final class RecordingContent
         return $summary;
     }
 
+    /**
+     * @return list<string>
+     */
+    public static function summaryLinks(RecordingDetail $recording): array
+    {
+        $contentList = is_array($recording->raw['content_list'] ?? null) ? $recording->raw['content_list'] : [];
+        usort($contentList, static function (array $first, array $second): int {
+            $priority = ['consumer_note' => 0, 'auto_sum_note' => 1];
+            return ($priority[$first['data_type'] ?? ''] ?? 2) <=> ($priority[$second['data_type'] ?? ''] ?? 2);
+        });
+
+        $links = [];
+        foreach ($contentList as $item) {
+            if (!is_array($item) || !in_array($item['data_type'] ?? '', ['consumer_note', 'auto_sum_note'], true)) {
+                continue;
+            }
+            if (isset($item['data_link']) && is_string($item['data_link']) && $item['data_link'] !== '') {
+                $links[] = $item['data_link'];
+            }
+        }
+
+        return $links;
+    }
+
     private static function findTextByKeys(mixed $value, array $keys): ?string
     {
         if (!is_array($value)) {

@@ -83,22 +83,7 @@ function resolveSummary(RecordingDetail $recording): ?string
 
 function fetchSummaryContent(PlaudClient $client, RecordingDetail $recording): ?string
 {
-    $contentList = is_array($recording->raw['content_list'] ?? null) ? $recording->raw['content_list'] : [];
-    usort($contentList, static function (array $first, array $second): int {
-        $priority = ['consumer_note' => 0, 'auto_sum_note' => 1];
-        return ($priority[$first['data_type'] ?? ''] ?? 2) <=> ($priority[$second['data_type'] ?? ''] ?? 2);
-    });
-
-    foreach ($contentList as $item) {
-        if (!is_array($item) || !in_array($item['data_type'] ?? '', ['consumer_note', 'auto_sum_note'], true)) {
-            continue;
-        }
-
-        $url = $item['data_link'] ?? null;
-        if (!is_string($url) || $url === '') {
-            continue;
-        }
-
+    foreach (RecordingContent::summaryLinks($recording) as $url) {
         try {
             $response = $client->getHttpClient()->request('GET', $url);
             if (!$response->isOk()) {
