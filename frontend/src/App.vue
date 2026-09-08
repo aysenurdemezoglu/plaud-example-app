@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 const email = ref('')
 const password = ref('')
@@ -12,11 +12,16 @@ const error = ref('')
 const copiedSection = ref('')
 const searchQuery = ref('')
 const sortOrder = ref('newest')
+const dateFrom = ref('')
+const dateTo = ref('')
+const contentFilter = ref('all')
 const audioUrl = ref('')
 const audioLoading = ref(false)
 const audioError = ref('')
 const audioDuration = ref(0)
 const audioCurrentTime = ref(0)
+const toast = ref(null)
+let toastTimer
 
 const isDetail = computed(() => selectedRecording.value !== null)
 const transcriptBlocks = computed(() => formatContent(selectedRecording.value?.transcript))
@@ -90,10 +95,22 @@ function handleAudioTimeUpdate(event) {
 function handleAudioError() {
   audioLoading.value = false
   audioError.value = 'The audio could not be played. The temporary URL may have expired.'
+  showToast('Audio could not be played.', 'error')
 }
 const visibleRecordings = computed(() => {
-  const query = searchQuery.value.trim().toLocaleLowerCase()
-  const filtered = recordings.value.filter((recording) => recording.filename.toLocaleLowerCase().includes(query))
+  const terms = searchQuery.value.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean)
+  const filtered = recordings.value.filter((recording) => {
+    const searchable = `${recording.filename} ${recording.date}`.toLocaleLowerCase()
+    const matchesSearch = terms.every((term) => searchable.includes(term))
+    const matchesFrom = !dateFrom.value || recording.dateKey >= dateFrom.value
+    const matchesTo = !dateTo.value || recording.dateKey <= dateTo.value
+    const matchesContent = contentFilter.value === 'all'
+      || (contentFilter.value === 'transcript' && recording.hasTranscript)
+      || (contentFilter.value === 'summary' && recording.hasSummary)
+      || (contentFilter.value === 'missing' && !recording.hasTranscript && !recording.hasSummary)
+
+    return matchesSearch && matchesFrom && matchesTo && matchesContent
+  })
 
   return [...filtered].sort((first, second) => {
     if (sortOrder.value === 'duration') return second.durationMinutes - first.durationMinutes
@@ -104,16 +121,50 @@ const visibleRecordings = computed(() => {
   })
 })
 
+function resetFilters() {
+  searchQuery.value = ''
+  dateFrom.value = ''
+  dateTo.value = ''
+  contentFilter.value = 'all'
+  sortOrder.value = 'newest'
+}
+
 async function request(path, options = {}) {
-  const response = await fetch(path, {
-    credentials: 'same-origin',
-    ...options,
-  })
-  const data = await response.json()
-  if (!response.ok) {
-    throw new Error(data.message || 'Something went wrong.')
+  try {
+    const response = await fetch(path, {
+      credentials: 'same-origin',
+      ...options,
+    })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      const requestError = new Error(friendlyError(data.message, response.status))
+      requestError.status = response.status
+      throw requestError
+    }
+    return data
+  } catch (requestError) {
+    if (requestError instanceof TypeError) {
+      throw new Error('The server could not be reached. Is the PHP server running?')
+    }
+    throw requestError
   }
-  return data
+}
+
+function friendlyError(message, status) {
+  if (status === 401) return 'Your Plaud session has expired. Please connect again.'
+  if (status === 404) return 'This recording or audio is no longer available.'
+  if (status === 422) return 'Please enter both your email and password.'
+  if (message?.toLowerCase().includes('authentication')) return 'Plaud could not authenticate this account. Check your credentials.'
+  if (message?.toLowerCase().includes('audio')) return 'Audio is not available for this recording.'
+  return message || 'Something went wrong. Please try again.'
+}
+
+function showToast(message, type = 'success') {
+  window.clearTimeout(toastTimer)
+  toast.value = { message, type }
+  toastTimer = window.setTimeout(() => {
+    toast.value = null
+  }, 3200)
 }
 
 async function loadRecordings() {
@@ -123,6 +174,7 @@ async function loadRecordings() {
     const data = await request('/api/recordings')
     recordings.value = data.recordings
     connected.value = true
+    if (data.recordings.length) showToast(`${data.recordings.length} recordings loaded.`)
   } catch (requestError) {
     connected.value = false
     if (requestError.message !== 'Plaud connection required.') {
@@ -140,6 +192,7 @@ async function connect() {
     const body = new URLSearchParams({ email: email.value, password: password.value })
     await request('/api/connect', { method: 'POST', body })
     password.value = ''
+    showToast('Plaud account connected.')
     await loadRecordings()
   } catch (requestError) {
     error.value = requestError.message
@@ -166,6 +219,7 @@ async function openRecording(id) {
       audioUrl.value = audio.audioUrl
     } catch (audioRequestError) {
       audioError.value = audioRequestError.message
+      showToast(audioError.value, 'error')
     } finally {
       audioLoading.value = false
     }
@@ -191,6 +245,7 @@ async function copyText(section, text) {
   if (!text || !navigator.clipboard) return
   await navigator.clipboard.writeText(text)
   copiedSection.value = section
+  showToast(`${section === 'summary' ? 'Summary' : 'Transcript'} copied.`)
   window.setTimeout(() => {
     if (copiedSection.value === section) copiedSection.value = ''
   }, 1600)
@@ -205,6 +260,7 @@ async function disconnect() {
   audioError.value = ''
   email.value = ''
   error.value = ''
+  showToast('You have been disconnected.')
 }
 
 function restoreRoute() {
@@ -220,6 +276,8 @@ onMounted(async () => {
   await loadRecordings()
   restoreRoute()
 })
+
+onUnmounted(() => window.clearTimeout(toastTimer))
 </script>
 
 <template>
@@ -236,8 +294,19 @@ onMounted(async () => {
     </header>
 
     <div v-if="error" class="alert" role="alert">{{ error }}</div>
+    <div v-if="toast" class="toast" :class="`toast-${toast.type}`" role="status" aria-live="polite">
+      <span class="toast-mark" aria-hidden="true">{{ toast.type === 'error' ? '!' : '✓' }}</span>
+      <span>{{ toast.message }}</span>
+    </div>
 
-    <section v-if="!connected" class="hero">
+    <section v-if="!connected && loading" class="hero loading-screen" aria-label="Loading workspace">
+      <div class="skeleton skeleton-kicker"></div>
+      <div class="skeleton skeleton-title"></div>
+      <div class="skeleton skeleton-copy"></div>
+      <div class="skeleton-connect"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-button"></div></div>
+    </section>
+
+    <section v-else-if="!connected" class="hero">
       <p class="eyebrow">Plaud integration workspace</p>
       <h1>Your conversations,<br /><em>ready to revisit.</em></h1>
       <p class="hero-copy">Connect a Plaud account to explore recordings, transcripts, and summaries in one focused workspace.</p>
@@ -310,10 +379,16 @@ onMounted(async () => {
         <section class="recording-tools" aria-label="Recording filters">
           <label class="search-field"><span>Search recordings</span><input v-model="searchQuery" type="search" placeholder="Search by title" /></label>
           <label class="sort-field"><span>Sort by</span><select v-model="sortOrder"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="duration">Longest first</option></select></label>
+          <label class="date-field"><span>From</span><input v-model="dateFrom" type="date" /></label>
+          <label class="date-field"><span>To</span><input v-model="dateTo" type="date" /></label>
+          <label class="content-field"><span>Content</span><select v-model="contentFilter"><option value="all">All recordings</option><option value="transcript">Transcript ready</option><option value="summary">Summary ready</option><option value="missing">Missing both</option></select></label>
+          <button class="reset-button" type="button" @click="resetFilters">Reset filters</button>
           <span class="result-count">{{ visibleRecordings.length }} of {{ recordings.length }} recordings</span>
         </section>
         <section class="recording-list" aria-label="Recordings">
-          <div v-if="loading" class="empty-state"><h2>Loading recordings</h2><p>Fetching your Plaud workspace.</p></div>
+          <div v-if="loading" class="skeleton-list" aria-label="Loading recordings">
+            <div v-for="index in 4" :key="index" class="skeleton-row"><span class="skeleton skeleton-icon"></span><span class="skeleton-row-text"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-date"></span></span><span class="skeleton skeleton-duration"></span></div>
+          </div>
           <div v-else-if="recordings.length === 0" class="empty-state"><h2>No recordings yet</h2><p>Your active Plaud recordings will appear here.</p></div>
           <div v-else-if="visibleRecordings.length === 0" class="empty-state"><h2>No matching recordings</h2><p>Try a different title or clear the search.</p></div>
           <button v-for="recording in visibleRecordings" v-else :key="recording.id" class="recording-row" type="button" @click="openRecording(recording.id)">

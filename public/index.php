@@ -134,7 +134,10 @@ if (str_starts_with($path, '/api/')) {
                 'id' => $recording->id,
                 'filename' => $recording->filename,
                 'date' => $recording->getFormattedStartDate('M j, Y / H:i'),
+                'dateKey' => $recording->getFormattedStartDate('Y-m-d'),
                 'durationMinutes' => $recording->getDurationMinutes(),
+                'hasTranscript' => $recording->isTrans,
+                'hasSummary' => $recording->isSummary,
             ], $client->listRecordings());
             jsonResponse(['recordings' => $items]);
         }

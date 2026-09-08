@@ -99,6 +99,45 @@ small {
     font-size: 13px;
 }
 
+.toast {
+    position: fixed;
+    z-index: 10;
+    right: 24px;
+    bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: min(360px, calc(100vw - 32px));
+    padding: 13px 16px;
+    border: 1px solid var(--line);
+    background: var(--cream);
+    box-shadow: 0 12px 30px rgba(24, 35, 31, .12);
+    color: var(--ink);
+    font-size: 13px;
+}
+
+.toast-error {
+    border-color: #dfb7a8;
+    background: #fff4ed;
+    color: #7d3929;
+}
+
+.toast-mark {
+    display: grid;
+    width: 20px;
+    height: 20px;
+    place-items: center;
+    border-radius: 50%;
+    background: #6f982b;
+    color: white;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.toast-error .toast-mark {
+    background: #bd6b4b;
+}
+
 .hero {
     max-width: 750px;
     padding: 105px 0 84px;
@@ -227,14 +266,16 @@ button {
 
 .recording-tools {
     display: grid;
-    grid-template-columns: minmax(220px, 1fr) 190px auto;
+    grid-template-columns: minmax(220px, 1fr) 170px 145px 145px 190px auto;
     gap: 22px;
     align-items: end;
     margin-bottom: 24px;
 }
 
 .search-field,
-.sort-field {
+.sort-field,
+.date-field,
+.content-field {
     gap: 8px;
     color: var(--muted);
     font-family: 'DM Mono', monospace;
@@ -244,7 +285,9 @@ button {
 }
 
 .search-field input,
-.sort-field select {
+.sort-field select,
+.date-field input,
+.content-field select {
     min-height: 42px;
     padding: 10px 12px;
     border: 1px solid var(--line);
@@ -256,6 +299,28 @@ button {
 
 .sort-field select {
     width: 100%;
+}
+
+.date-field input,
+.content-field select {
+    width: 100%;
+}
+
+.reset-button {
+    align-self: end;
+    min-height: 42px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.reset-button:hover {
+    background: var(--cream);
+    color: var(--ink);
 }
 
 .result-count {
@@ -341,6 +406,98 @@ button {
 .empty-state p,
 .detail-meta {
     color: var(--muted);
+}
+
+.loading-screen {
+    display: grid;
+    gap: 18px;
+}
+
+.skeleton {
+    display: block;
+    background: linear-gradient(100deg, #e7e9df 30%, #f7f7f0 45%, #e7e9df 60%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-kicker {
+    width: 160px;
+    height: 12px;
+}
+
+.skeleton-title {
+    width: min(600px, 80%);
+    height: 82px;
+}
+
+.skeleton-copy {
+    width: 340px;
+    max-width: 80%;
+    height: 18px;
+}
+
+.skeleton-connect {
+    display: grid;
+    gap: 14px;
+    max-width: 560px;
+    margin-top: 28px;
+    padding: 28px;
+    background: var(--cream);
+    border: 1px solid var(--line);
+}
+
+.skeleton-line {
+    height: 16px;
+}
+
+.skeleton-button {
+    width: 160px;
+    height: 46px;
+    margin-top: 8px;
+}
+
+.skeleton-list {
+    border-top: 1px solid var(--line);
+}
+
+.skeleton-row {
+    display: grid;
+    grid-template-columns: 42px 1fr 100px;
+    gap: 18px;
+    align-items: center;
+    padding: 21px 4px;
+    border-bottom: 1px solid var(--line);
+}
+
+.skeleton-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+}
+
+.skeleton-row-text {
+    display: grid;
+    gap: 9px;
+}
+
+.skeleton-name {
+    width: min(70%, 420px);
+    height: 15px;
+}
+
+.skeleton-date {
+    width: 130px;
+    height: 10px;
+}
+
+.skeleton-duration {
+    width: 70px;
+    height: 11px;
+}
+
+@keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 
 .detail-heading {
@@ -566,8 +723,31 @@ button {
         margin-bottom: 24px;
     }
 
+    .reset-button {
+        width: 100%;
+    }
+
     .result-count {
         padding-bottom: 0;
+    }
+
+    .toast {
+        right: 16px;
+        bottom: 16px;
+    }
+
+    .skeleton-title {
+        width: 90%;
+        height: 58px;
+    }
+
+    .skeleton-row {
+        grid-template-columns: 25px 1fr;
+        gap: 12px;
+    }
+
+    .skeleton-duration {
+        display: none;
     }
 
     .recording-row {
