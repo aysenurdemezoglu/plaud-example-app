@@ -17,12 +17,55 @@ const audioLoading = ref(false)
 const audioError = ref('')
 
 const isDetail = computed(() => selectedRecording.value !== null)
-const transcriptParagraphs = computed(() => splitContent(selectedRecording.value?.transcript))
-const summaryParagraphs = computed(() => splitContent(selectedRecording.value?.summary))
+const transcriptBlocks = computed(() => formatContent(selectedRecording.value?.transcript))
+const summaryBlocks = computed(() => formatContent(selectedRecording.value?.summary))
 
-function splitContent(content) {
+function formatContent(content) {
   if (!content) return []
-  return content.replace(/\r\n/g, '\n').split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean)
+
+  const lines = content.replace(/\r\n/g, '\n').split('\n')
+  const blocks = []
+  let listItems = []
+
+  function flushList() {
+    if (listItems.length) {
+      blocks.push({ type: 'list', items: listItems })
+      listItems = []
+    }
+  }
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim()
+    if (!line) {
+      flushList()
+      continue
+    }
+
+    const heading = line.match(/^#{1,6}\s+(.+)$/)
+    const bullet = line.match(/^[-*]\s+(.+)$/)
+    const numbered = line.match(/^\d+[.)]\s+(.+)$/)
+
+    if (heading) {
+      flushList()
+      blocks.push({ type: 'heading', text: cleanMarkdown(heading[1]) })
+    } else if (bullet || numbered) {
+      listItems.push(cleanMarkdown((bullet || numbered)[1]))
+    } else {
+      flushList()
+      blocks.push({ type: 'paragraph', text: cleanMarkdown(line) })
+    }
+  }
+
+  flushList()
+  return blocks
+}
+
+function cleanMarkdown(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/__(.+?)__/g, '$1')
+    .replace(/`(.+?)`/g, '$1')
+    .trim()
 }
 const visibleRecordings = computed(() => {
   const query = searchQuery.value.trim().toLocaleLowerCase()
@@ -207,15 +250,23 @@ onMounted(async () => {
       <section v-if="isDetail && selectedRecording" class="content-grid" aria-label="Recording content">
         <article class="content-panel">
           <div class="section-heading"><div><span class="panel-kicker">Transcript</span><span class="content-state">{{ selectedRecording.transcript ? 'Available' : 'Not available' }}</span></div><button v-if="selectedRecording.transcript" class="text-button" type="button" @click="copyText('transcript', selectedRecording.transcript)">{{ copiedSection === 'transcript' ? 'Copied' : 'Copy' }}</button></div>
-          <div v-if="transcriptParagraphs.length" class="rich-text">
-            <p v-for="(paragraph, index) in transcriptParagraphs" :key="`transcript-${index}`">{{ paragraph }}</p>
+          <div v-if="transcriptBlocks.length" class="rich-text">
+            <template v-for="(block, index) in transcriptBlocks" :key="`transcript-${index}`">
+              <h3 v-if="block.type === 'heading'">{{ block.text }}</h3>
+              <p v-else-if="block.type === 'paragraph'">{{ block.text }}</p>
+              <ul v-else><li v-for="item in block.items" :key="item">{{ item }}</li></ul>
+            </template>
           </div>
           <p v-else class="content-empty">No transcript is available for this recording.</p>
         </article>
         <article class="content-panel summary-panel">
           <div class="section-heading"><div><span class="panel-kicker">Summary</span><span class="content-state">{{ selectedRecording.summary ? 'Available' : 'Not available' }}</span></div><button v-if="selectedRecording.summary" class="text-button" type="button" @click="copyText('summary', selectedRecording.summary)">{{ copiedSection === 'summary' ? 'Copied' : 'Copy' }}</button></div>
-          <div v-if="summaryParagraphs.length" class="rich-text">
-            <p v-for="(paragraph, index) in summaryParagraphs" :key="`summary-${index}`">{{ paragraph }}</p>
+          <div v-if="summaryBlocks.length" class="rich-text">
+            <template v-for="(block, index) in summaryBlocks" :key="`summary-${index}`">
+              <h3 v-if="block.type === 'heading'">{{ block.text }}</h3>
+              <p v-else-if="block.type === 'paragraph'">{{ block.text }}</p>
+              <ul v-else><li v-for="item in block.items" :key="item">{{ item }}</li></ul>
+            </template>
           </div>
           <p v-else class="content-empty">No summary is available for this recording.</p>
         </article>

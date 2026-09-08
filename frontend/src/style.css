@@ -487,6 +487,24 @@ button {
     margin-bottom: 0;
 }
 
+.rich-text h3 {
+    margin: 0 0 12px;
+    color: var(--ink);
+    font-family: Manrope, sans-serif;
+    font-size: 16px;
+    letter-spacing: -.02em;
+}
+
+.rich-text ul {
+    margin: 0 0 22px;
+    padding-left: 21px;
+}
+
+.rich-text li {
+    margin-bottom: 8px;
+    padding-left: 4px;
+}
+
 .content-empty {
     padding-top: 25px;
     color: var(--muted);
