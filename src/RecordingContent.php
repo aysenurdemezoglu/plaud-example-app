@@ -8,40 +8,26 @@ use Plaud\DTO\RecordingDetail;
 
 final class RecordingContent
 {
-    public static function resolveTranscript(RecordingDetail $recording): string
+    public static function resolveSummary(RecordingDetail $recording): string
     {
-        $directTranscript = self::findTextByKeys($recording->raw, ['transcript', 'transcript_text']);
-        if ($directTranscript !== null) {
-            return $directTranscript;
-        }
-
-        foreach ($recording->raw as $value) {
-            if (!is_array($value)) {
-                continue;
-            }
-            foreach ($value as $item) {
-                if (!is_array($item)) {
-                    continue;
-                }
-                $type = strtolower((string) ($item['type'] ?? $item['content_type'] ?? $item['name'] ?? ''));
-                if (str_contains($type, 'transcript') && isset($item['data_content']) && is_string($item['data_content'])) {
-                    return trim($item['data_content']);
-                }
-            }
-        }
-
-        return $recording->transcript;
+        // Support the installed legacy SDK and the renamed SDK during migration.
+        return property_exists($recording, 'customSummary')
+            ? $recording->summary
+            : $recording->transcript;
     }
 
-    public static function resolveSummary(RecordingDetail $recording): ?string
+    public static function resolveCustomSummary(RecordingDetail $recording): ?string
     {
         $preferredSummary = self::findTextByKeys($recording->raw, ['ai_summary', 'ai_summary_text', 'summary_text']);
         if ($preferredSummary !== null && !self::isSummaryIdentifier($preferredSummary)) {
             return $preferredSummary;
         }
 
-        $summary = self::findSummary($recording->raw) ?? $recording->summary;
-        if ($summary === null || self::isSummaryIdentifier($summary)) {
+        $sdkSummary = property_exists($recording, 'customSummary')
+            ? $recording->customSummary
+            : $recording->summary;
+        $summary = self::findSummary($recording->raw) ?? $sdkSummary;
+        if ($summary === null || trim($summary) === '' || self::isSummaryIdentifier(trim($summary))) {
             return null;
         }
 
@@ -51,17 +37,12 @@ final class RecordingContent
     /**
      * @return list<string>
      */
-    public static function summaryLinks(RecordingDetail $recording): array
+    public static function customSummaryLinks(RecordingDetail $recording): array
     {
         $contentList = is_array($recording->raw['content_list'] ?? null) ? $recording->raw['content_list'] : [];
-        usort($contentList, static function (array $first, array $second): int {
-            $priority = ['consumer_note' => 0, 'auto_sum_note' => 1];
-            return ($priority[$first['data_type'] ?? ''] ?? 2) <=> ($priority[$second['data_type'] ?? ''] ?? 2);
-        });
-
         $links = [];
         foreach ($contentList as $item) {
-            if (!is_array($item) || !in_array($item['data_type'] ?? '', ['consumer_note', 'auto_sum_note'], true)) {
+            if (!is_array($item) || ($item['data_type'] ?? '') !== 'consumer_note') {
                 continue;
             }
             if (isset($item['data_link']) && is_string($item['data_link']) && $item['data_link'] !== '') {
