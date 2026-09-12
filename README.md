@@ -51,3 +51,11 @@ php -S 127.0.0.1:8080 -t public
 Then open <http://127.0.0.1:8080>. The PHP fallback remains available until the Vue build exists.
 
 OAuth support will be added after Plaud provides private-beta access and endpoint details.
+
+## Summary API migration
+
+The PHP API now returns `summary` (standard summary) and `customSummary` (custom-template summary, nullable) from `GET /api/recordings/{id}`. The old `transcript` key has been removed. List responses use `hasSummary` and `hasCustomSummary`, mapped from the existing upstream `is_trans` and `is_summary` flags. These list flags are upstream hints, not checks of downloaded content.
+
+The backend supports both the installed legacy SDK and the renamed SDK, using the presence of `customSummary` to select the correct property mapping. Custom-summary nested content and identifier filtering are retained. Only `consumer_note` links are downloaded for custom-template content; `auto_sum_note` is no longer used as a custom-summary fallback.
+
+Vue must migrate its property reads, filters, labels, and copy actions together before using this API contract. Vue source is not updated by this backend change. The PHP fallback page uses the new summary names and the same content resolution as the API.
