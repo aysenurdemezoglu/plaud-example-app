@@ -1,13 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700;800&display=swap');
 
 :root {
-    --ink: #18231f;
-    --muted: #68736d;
-    --paper: #f4f1e9;
-    --cream: #fbfaf6;
-    --lime: #c9e86b;
-    --line: #d9ddd3;
-    --serif: Georgia, 'Times New Roman', serif;
+    --ink: #000000;
+    --white: #ffffff;
+    --accent: #e6007e;
+    --muted: rgba(0, 0, 0, .55);
+    --paper: #ffffff;
+    --cream: #ffffff;
+    --line: rgba(0, 0, 0, .14);
 }
 
 * {
@@ -17,8 +17,8 @@
 body {
     margin: 0;
     color: var(--ink);
-    background: radial-gradient(circle at 80% 0%, #e4edc1 0, transparent 28rem), var(--paper);
-    font-family: Manrope, sans-serif;
+    background: radial-gradient(circle at 80% 0%, rgba(230, 0, 126, .06) 0, transparent 28rem), var(--paper);
+    font-family: 'League Spartan', sans-serif;
 }
 
 button,
@@ -61,8 +61,9 @@ button {
     place-items: center;
     border-radius: 50%;
     background: var(--ink);
-    color: var(--lime);
-    font-family: var(--serif);
+    color: var(--accent);
+    font-family: 'League Spartan', sans-serif;
+    font-weight: 800;
     font-size: 18px;
 }
 
@@ -71,8 +72,9 @@ button {
 .eyebrow,
 small {
     color: var(--muted);
-    font-family: 'DM Mono', monospace;
+    font-family: 'League Spartan', sans-serif;
     font-size: 11px;
+    font-weight: 600;
     letter-spacing: .06em;
     text-transform: uppercase;
 }
@@ -83,19 +85,19 @@ small {
     height: 7px;
     margin-right: 7px;
     border-radius: 50%;
-    background: #e0a84f;
+    background: rgba(0, 0, 0, .3);
 }
 
 .status-dot.is-connected {
-    background: #6f982b;
+    background: var(--accent);
 }
 
 .alert {
     margin-top: 28px;
     padding: 15px 18px;
-    border-left: 3px solid #bd6b4b;
-    background: #fff4ed;
-    color: #7d3929;
+    border-left: 3px solid var(--ink);
+    background: var(--white);
+    color: var(--ink);
     font-size: 13px;
 }
 
@@ -110,16 +112,16 @@ small {
     max-width: min(360px, calc(100vw - 32px));
     padding: 13px 16px;
     border: 1px solid var(--line);
-    background: var(--cream);
-    box-shadow: 0 12px 30px rgba(24, 35, 31, .12);
+    background: var(--white);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .12);
     color: var(--ink);
     font-size: 13px;
 }
 
 .toast-error {
-    border-color: #dfb7a8;
-    background: #fff4ed;
-    color: #7d3929;
+    border-color: var(--ink);
+    background: var(--white);
+    color: var(--ink);
 }
 
 .toast-mark {
@@ -128,14 +130,14 @@ small {
     height: 20px;
     place-items: center;
     border-radius: 50%;
-    background: #6f982b;
-    color: white;
+    background: var(--accent);
+    color: var(--white);
     font-size: 12px;
     font-weight: 800;
 }
 
 .toast-error .toast-mark {
-    background: #bd6b4b;
+    background: var(--ink);
 }
 
 .hero {
@@ -146,7 +148,7 @@ small {
 .eyebrow,
 .panel-kicker {
     margin: 0 0 22px;
-    color: #72822d;
+    color: var(--accent);
 }
 
 h1 {
@@ -157,9 +159,10 @@ h1 {
 }
 
 h1 em {
-    color: #829b35;
-    font-family: var(--serif);
-    font-weight: 400;
+    color: var(--accent);
+    font-family: 'League Spartan', sans-serif;
+    font-weight: 700;
+    font-style: normal;
     letter-spacing: -.04em;
 }
 
@@ -176,7 +179,7 @@ h1 em {
     grid-template-columns: .9fr 1.1fr;
     gap: 60px;
     padding: 42px;
-    background: var(--cream);
+    background: var(--white);
     border: 1px solid var(--line);
 }
 
@@ -216,7 +219,7 @@ input {
 }
 
 input:focus {
-    border-color: var(--ink);
+    border-color: var(--accent);
 }
 
 button {
@@ -230,12 +233,13 @@ button {
     margin-top: 10px;
     padding: 16px 18px;
     background: var(--ink);
-    color: var(--lime);
+    color: var(--accent);
     font-weight: 700;
 }
 
 .connect-form button:hover {
-    background: #30453a;
+    background: var(--accent);
+    color: var(--white);
 }
 
 .connect-form button:disabled {
@@ -278,9 +282,9 @@ button {
 .content-field {
     gap: 8px;
     color: var(--muted);
-    font-family: 'DM Mono', monospace;
+    font-family: 'League Spartan', sans-serif;
     font-size: 10px;
-    font-weight: 400;
+    font-weight: 600;
     text-transform: uppercase;
 }
 
@@ -291,9 +295,9 @@ button {
     min-height: 42px;
     padding: 10px 12px;
     border: 1px solid var(--line);
-    background: var(--cream);
+    background: var(--white);
     color: var(--ink);
-    font-family: Manrope, sans-serif;
+    font-family: 'League Spartan', sans-serif;
     font-size: 13px;
 }
 
@@ -313,21 +317,24 @@ button {
     border: 1px solid var(--line);
     background: transparent;
     color: var(--muted);
-    font-family: 'DM Mono', monospace;
+    font-family: 'League Spartan', sans-serif;
     font-size: 10px;
+    font-weight: 600;
     text-transform: uppercase;
 }
 
 .reset-button:hover {
-    background: var(--cream);
-    color: var(--ink);
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--white);
 }
 
 .result-count {
     padding-bottom: 13px;
     color: var(--muted);
-    font-family: 'DM Mono', monospace;
+    font-family: 'League Spartan', sans-serif;
     font-size: 10px;
+    font-weight: 600;
     text-transform: uppercase;
     white-space: nowrap;
 }
@@ -342,7 +349,8 @@ button {
 }
 
 .secondary-button:hover {
-    background: var(--cream);
+    background: var(--ink);
+    color: var(--white);
 }
 
 .recording-list {
@@ -366,12 +374,13 @@ button {
 .recording-row:hover {
     padding-left: 12px;
     padding-right: 12px;
-    background: rgba(251, 250, 246, .75);
+    background: rgba(230, 0, 126, .05);
 }
 
 .recording-index {
-    color: #829b35;
+    color: var(--accent);
     font-size: 20px;
+    font-weight: 700;
 }
 
 .recording-title {
@@ -390,7 +399,7 @@ button {
 
 .recording-duration {
     color: var(--muted);
-    font-family: 'DM Mono', monospace;
+    font-family: 'League Spartan', sans-serif;
     font-size: 11px;
 }
 
@@ -415,7 +424,7 @@ button {
 
 .skeleton {
     display: block;
-    background: linear-gradient(100deg, #e7e9df 30%, #f7f7f0 45%, #e7e9df 60%);
+    background: linear-gradient(100deg, rgba(0, 0, 0, .06) 30%, rgba(0, 0, 0, .02) 45%, rgba(0, 0, 0, .06) 60%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.4s ease-in-out infinite;
 }
@@ -442,7 +451,7 @@ button {
     max-width: 560px;
     margin-top: 28px;
     padding: 28px;
-    background: var(--cream);
+    background: var(--white);
     border: 1px solid var(--line);
 }
 
@@ -508,14 +517,15 @@ button {
     display: inline-block;
     margin-bottom: 58px;
     color: var(--muted);
-    font-family: 'DM Mono', monospace;
+    font-family: 'League Spartan', sans-serif;
     font-size: 11px;
+    font-weight: 600;
     text-decoration: none;
     text-transform: uppercase;
 }
 
 .back-link:hover {
-    color: var(--ink);
+    color: var(--accent);
 }
 
 .detail-heading .eyebrow {
@@ -524,8 +534,9 @@ button {
 
 .detail-meta {
     margin: 22px 0 0;
-    font-family: 'DM Mono', monospace;
+    font-family: 'League Spartan', sans-serif;
     font-size: 11px;
+    font-weight: 600;
     text-transform: uppercase;
 }
 
@@ -535,8 +546,9 @@ button {
     gap: 10px 28px;
     margin-top: 28px;
     color: var(--muted);
-    font-family: 'DM Mono', monospace;
+    font-family: 'League Spartan', sans-serif;
     font-size: 10px;
+    font-weight: 600;
     text-transform: uppercase;
 }
 
@@ -550,7 +562,7 @@ button {
     margin-top: 30px;
     padding: 18px 20px;
     border: 1px solid var(--line);
-    background: rgba(251, 250, 246, .7);
+    background: var(--white);
 }
 
 .audio-heading {
@@ -575,7 +587,7 @@ button {
     justify-content: space-between;
     margin-top: 8px;
     color: var(--muted);
-    font-family: 'DM Mono', monospace;
+    font-family: 'League Spartan', sans-serif;
     font-size: 10px;
 }
 
@@ -587,7 +599,8 @@ button {
 
 .audio-error {
     margin-top: 10px;
-    color: #9a5039;
+    color: var(--ink);
+    font-weight: 700;
 }
 
 .content-grid {
@@ -601,11 +614,11 @@ button {
 .content-panel {
     min-height: 350px;
     padding: 28px;
-    background: var(--cream);
+    background: var(--white);
 }
 
 .summary-panel {
-    background: #eaf0d5;
+    background: rgba(230, 0, 126, .05);
 }
 
 .section-heading {
@@ -626,25 +639,27 @@ button {
     padding: 0;
     background: transparent;
     color: var(--muted);
-    font-family: 'DM Mono', monospace;
+    font-family: 'League Spartan', sans-serif;
     font-size: 10px;
+    font-weight: 600;
     text-transform: uppercase;
 }
 
 .text-button:hover {
-    color: var(--ink);
+    color: var(--accent);
 }
 
 .content-state {
-    color: #72822d;
-    font-family: 'DM Mono', monospace;
+    color: var(--accent);
+    font-family: 'League Spartan', sans-serif;
     font-size: 10px;
+    font-weight: 600;
     text-transform: uppercase;
 }
 
 .rich-text {
     padding-top: 25px;
-    color: #3d4942;
+    color: var(--ink);
     font-size: 14px;
     line-height: 1.85;
     white-space: pre-wrap;
@@ -661,7 +676,7 @@ button {
 .rich-text h3 {
     margin: 0 0 12px;
     color: var(--ink);
-    font-family: Manrope, sans-serif;
+    font-family: 'League Spartan', sans-serif;
     font-size: 16px;
     letter-spacing: -.02em;
 }
