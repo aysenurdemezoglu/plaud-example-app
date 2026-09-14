@@ -10,17 +10,17 @@ use PHPUnit\Framework\TestCase;
 
 final class RecordingContentTest extends TestCase
 {
-    public function testUsesDirectTranscriptBeforeOtherContent(): void
+    public function testUsesSdkStandardSummary(): void
     {
         $recording = RecordingDetail::fromArray([
             'file_id' => 'recording-1',
-            'transcript' => 'The transcript that matches the audio.',
+            'transcript' => 'Standard summary.',
             'pre_download_content_list' => [
-                ['data_content' => 'A different generated version.'],
+                ['data_content' => 'A longer standard summary selected by the SDK.'],
             ],
         ]);
 
-        self::assertSame('The transcript that matches the audio.', RecordingContent::resolveTranscript($recording));
+        self::assertSame('A longer standard summary selected by the SDK.', RecordingContent::resolveSummary($recording));
     }
 
     public function testResolvesNestedSummaryContent(): void
@@ -35,7 +35,7 @@ final class RecordingContentTest extends TestCase
             ],
         ]);
 
-        self::assertSame('A clean summary of the conversation.', RecordingContent::resolveSummary($recording));
+        self::assertSame('A clean summary of the conversation.', RecordingContent::resolveCustomSummary($recording));
     }
 
     public function testIgnoresSummaryIdentifierWhenNoContentExists(): void
@@ -45,10 +45,10 @@ final class RecordingContentTest extends TestCase
             'summary' => '20260713161334-v2@summary-id',
         ]);
 
-        self::assertNull(RecordingContent::resolveSummary($recording));
+        self::assertNull(RecordingContent::resolveCustomSummary($recording));
     }
 
-    public function testPrioritizesConsumerSummaryLink(): void
+    public function testUsesOnlyCustomTemplateLinks(): void
     {
         $recording = RecordingDetail::fromArray([
             'file_id' => 'recording-4',
@@ -60,8 +60,37 @@ final class RecordingContentTest extends TestCase
         ]);
 
         self::assertSame(
-            ['https://example.test/consumer-summary', 'https://example.test/auto-summary'],
-            RecordingContent::summaryLinks($recording)
+            ['https://example.test/consumer-summary'],
+            RecordingContent::customSummaryLinks($recording)
         );
+    }
+    public function testMissingCustomSummaryDoesNotFallBackToStandardSummary(): void
+    {
+        $recording = RecordingDetail::fromArray(['transcript' => 'Standard summary only']);
+        self::assertSame('Standard summary only', RecordingContent::resolveSummary($recording));
+        self::assertNull(RecordingContent::resolveCustomSummary($recording));
+    }
+
+    public function testSeparateSummariesAndEmptyContent(): void
+    {
+        $recording = RecordingDetail::fromArray([
+            'transcript' => 'Standard summary',
+            'summary' => 'Custom-template summary',
+        ]);
+        self::assertSame('Standard summary', RecordingContent::resolveSummary($recording));
+        self::assertSame('Custom-template summary', RecordingContent::resolveCustomSummary($recording));
+        $empty = RecordingDetail::fromArray([]);
+        self::assertSame('', RecordingContent::resolveSummary($empty));
+        self::assertNull(RecordingContent::resolveCustomSummary($empty));
+    }
+
+    public function testMalformedLinksAndStandardOnlyLinksAreIgnored(): void
+    {
+        $recording = RecordingDetail::fromArray(['content_list' => [
+            null, 'invalid', [],
+            ['data_type' => 'auto_sum_note', 'data_link' => 'https://example.test/standard'],
+            ['data_type' => 'consumer_note', 'data_link' => ''],
+        ]]);
+        self::assertSame([], RecordingContent::customSummaryLinks($recording));
     }
 }

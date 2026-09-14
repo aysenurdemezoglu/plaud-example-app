@@ -11,6 +11,7 @@ use Plaud\Exceptions\PlaudException;
 use Plaud\PlaudClient;
 use Plaud\Storage\FileTokenStorage;
 use PlaudExample\RecordingContent;
+use PlaudExample\RecordingResponse;
 
 session_start();
 
@@ -41,6 +42,8 @@ $recordingId = isset($_GET['id']) ? trim((string) $_GET['id']) : '';
 $error = null;
 $recordings = [];
 $detail = null;
+$detailSummary = '';
+$detailCustomSummary = null;
 
 function escape(string $value): string
 {
@@ -71,19 +74,9 @@ function requireApiConnection(): void
     }
 }
 
-function resolveTranscript(RecordingDetail $recording): string
+function fetchCustomSummaryContent(PlaudClient $client, RecordingDetail $recording): ?string
 {
-    return RecordingContent::resolveTranscript($recording);
-}
-
-function resolveSummary(RecordingDetail $recording): ?string
-{
-    return RecordingContent::resolveSummary($recording);
-}
-
-function fetchSummaryContent(PlaudClient $client, RecordingDetail $recording): ?string
-{
-    foreach (RecordingContent::summaryLinks($recording) as $url) {
+    foreach (RecordingContent::customSummaryLinks($recording) as $url) {
         try {
             $response = $client->getHttpClient()->request('GET', $url);
             if (!$response->isOk()) {
@@ -130,15 +123,7 @@ if (str_starts_with($path, '/api/')) {
         $client = createClient($tokenStorage, $region);
 
         if ($path === '/api/recordings' && $_SERVER['REQUEST_METHOD'] === 'GET') {
-            $items = array_map(static fn (Recording $recording): array => [
-                'id' => $recording->id,
-                'filename' => $recording->filename,
-                'date' => $recording->getFormattedStartDate('M j, Y / H:i'),
-                'dateKey' => $recording->getFormattedStartDate('Y-m-d'),
-                'durationMinutes' => $recording->getDurationMinutes(),
-                'hasTranscript' => $recording->isTrans,
-                'hasSummary' => $recording->isSummary,
-            ], $client->listRecordings());
+            $items = array_map([RecordingResponse::class, 'listItem'], $client->listRecordings());
             jsonResponse(['recordings' => $items]);
         }
 
@@ -153,15 +138,8 @@ if (str_starts_with($path, '/api/')) {
 
         if (preg_match('#^/api/recordings/([^/]+)$#', $path, $matches) === 1 && $_SERVER['REQUEST_METHOD'] === 'GET') {
             $recording = $client->getRecording(urldecode($matches[1]));
-            $summary = resolveSummary($recording) ?? fetchSummaryContent($client, $recording);
-            jsonResponse(['recording' => [
-                'id' => $recording->id,
-                'filename' => $recording->filename,
-                'date' => $recording->getFormattedStartDate('M j, Y / H:i'),
-                'durationMinutes' => $recording->getDurationMinutes(),
-                'transcript' => resolveTranscript($recording),
-                'summary' => $summary,
-            ]]);
+            $customSummary = RecordingContent::resolveCustomSummary($recording) ?? fetchCustomSummaryContent($client, $recording);
+            jsonResponse(['recording' => RecordingResponse::detail($recording, $customSummary)]);
         }
 
         jsonResponse(['message' => 'API route not found.'], 404);
@@ -219,6 +197,8 @@ if ($connected) {
         $client = createClient($tokenStorage, $region);
         if ($recordingId !== '') {
             $detail = $client->getRecording($recordingId);
+            $detailSummary = RecordingContent::resolveSummary($detail);
+            $detailCustomSummary = RecordingContent::resolveCustomSummary($detail) ?? fetchCustomSummaryContent($client, $detail);
         } else {
             $recordings = $client->listRecordings();
         }
@@ -239,7 +219,7 @@ $pageTitle = $detail instanceof RecordingDetail ? $detail->filename : 'Recording
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= escape($pageTitle . ' · ' . $appName) ?></title>
+    <title><?= escape($pageTitle . ' Â· ' . $appName) ?></title>
     <link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
@@ -260,7 +240,7 @@ $pageTitle = $detail instanceof RecordingDetail ? $detail->filename : 'Recording
             <section class="hero">
                 <p class="eyebrow">Plaud integration workspace</p>
                 <h1>Your conversations,<br><em>ready to revisit.</em></h1>
-                <p class="hero-copy">Connect a Plaud account to explore recordings, transcripts, and summaries in one focused workspace.</p>
+                <p class="hero-copy">Connect a Plaud account to explore recordings, summaries, and custom-template summaries in one focused workspace.</p>
             </section>
 
             <section class="connect-panel" aria-labelledby="connect-title">
@@ -286,12 +266,12 @@ $pageTitle = $detail instanceof RecordingDetail ? $detail->filename : 'Recording
 
             <section class="content-grid" aria-label="Recording content">
                 <article class="content-panel">
-                    <div class="section-heading"><span class="panel-kicker">Transcript</span><span class="content-state"><?= $detail->hasTranscript() ? 'Available' : 'Not available' ?></span></div>
-                    <div class="rich-text"><?= $detail->hasTranscript() ? nl2br(escape($detail->transcript)) : '<p>No transcript is available for this recording.</p>' ?></div>
+                    <div class="section-heading"><span class="panel-kicker">Summary</span><span class="content-state"><?= (trim($detailSummary) !== '') ? 'Available' : 'Not available' ?></span></div>
+                    <div class="rich-text"><?= (trim($detailSummary) !== '') ? nl2br(escape($detailSummary)) : '<p>No summary is available for this recording.</p>' ?></div>
                 </article>
                 <article class="content-panel summary-panel">
-                    <div class="section-heading"><span class="panel-kicker">Summary</span><span class="content-state"><?= $detail->summary ? 'Available' : 'Not available' ?></span></div>
-                    <div class="rich-text"><?= $detail->summary ? nl2br(escape($detail->summary)) : '<p>No summary is available for this recording.</p>' ?></div>
+                    <div class="section-heading"><span class="panel-kicker">Custom-template summary</span><span class="content-state"><?= $detailCustomSummary ? 'Available' : 'Not available' ?></span></div>
+                    <div class="rich-text"><?= $detailCustomSummary ? nl2br(escape($detailCustomSummary)) : '<p>No custom-template summary is available for this recording.</p>' ?></div>
                 </article>
             </section>
         <?php else: ?>
