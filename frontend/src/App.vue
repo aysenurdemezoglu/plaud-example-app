@@ -24,8 +24,8 @@ const toast = ref(null)
 let toastTimer
 
 const isDetail = computed(() => selectedRecording.value !== null)
-const transcriptBlocks = computed(() => formatContent(selectedRecording.value?.transcript))
 const summaryBlocks = computed(() => formatContent(selectedRecording.value?.summary))
+const customSummaryBlocks = computed(() => formatContent(selectedRecording.value?.customSummary))
 
 function formatContent(content) {
   if (!content) return []
@@ -105,9 +105,9 @@ const visibleRecordings = computed(() => {
     const matchesFrom = !dateFrom.value || recording.dateKey >= dateFrom.value
     const matchesTo = !dateTo.value || recording.dateKey <= dateTo.value
     const matchesContent = contentFilter.value === 'all'
-      || (contentFilter.value === 'transcript' && recording.hasTranscript)
       || (contentFilter.value === 'summary' && recording.hasSummary)
-      || (contentFilter.value === 'missing' && !recording.hasTranscript && !recording.hasSummary)
+      || (contentFilter.value === 'customSummary' && recording.hasCustomSummary)
+      || (contentFilter.value === 'missing' && !recording.hasSummary && !recording.hasCustomSummary)
 
     return matchesSearch && matchesFrom && matchesTo && matchesContent
   })
@@ -245,7 +245,7 @@ async function copyText(section, text) {
   if (!text || !navigator.clipboard) return
   await navigator.clipboard.writeText(text)
   copiedSection.value = section
-  showToast(`${section === 'summary' ? 'Summary' : 'Transcript'} copied.`)
+  showToast(`${section === 'customSummary' ? 'Custom summary' : 'Summary'} copied.`)
   window.setTimeout(() => {
     if (copiedSection.value === section) copiedSection.value = ''
   }, 1600)
@@ -309,7 +309,7 @@ onUnmounted(() => window.clearTimeout(toastTimer))
     <section v-else-if="!connected" class="hero">
       <p class="eyebrow">Plaud integration workspace</p>
       <h1>Your conversations,<br /><em>ready to revisit.</em></h1>
-      <p class="hero-copy">Connect a Plaud account to explore recordings, transcripts, and summaries in one focused workspace.</p>
+      <p class="hero-copy">Connect a Plaud account to explore recordings, summaries, and custom summaries in one focused workspace.</p>
 
       <form class="connect-panel" @submit.prevent="connect">
         <div>
@@ -333,8 +333,8 @@ onUnmounted(() => window.clearTimeout(toastTimer))
         <h1>{{ selectedRecording.filename }}</h1>
         <p class="detail-meta">{{ selectedRecording.date || 'Undated recording' }} &middot; {{ selectedRecording.durationMinutes }} min</p>
         <div class="detail-stats" aria-label="Recording content summary">
-          <span><strong>{{ selectedRecording.transcript ? selectedRecording.transcript.length.toLocaleString() : 0 }}</strong> transcript characters</span>
           <span><strong>{{ selectedRecording.summary ? 'Ready' : 'None' }}</strong> summary</span>
+          <span><strong>{{ selectedRecording.customSummary ? 'Ready' : 'None' }}</strong> custom summary</span>
         </div>
         <div class="audio-panel" aria-label="Recording audio">
           <div class="audio-heading"><span class="panel-kicker">Audio</span><span class="content-state">{{ audioLoading ? 'Loading' : audioUrl ? 'Ready' : 'Unavailable' }}</span></div>
@@ -348,17 +348,6 @@ onUnmounted(() => window.clearTimeout(toastTimer))
 
       <section v-if="isDetail && selectedRecording" class="content-grid" aria-label="Recording content">
         <article class="content-panel">
-          <div class="section-heading"><div><span class="panel-kicker">Transcript</span><span class="content-state">{{ selectedRecording.transcript ? 'Available' : 'Not available' }}</span></div><button v-if="selectedRecording.transcript" class="text-button" type="button" @click="copyText('transcript', selectedRecording.transcript)">{{ copiedSection === 'transcript' ? 'Copied' : 'Copy' }}</button></div>
-          <div v-if="transcriptBlocks.length" class="rich-text">
-            <template v-for="(block, index) in transcriptBlocks" :key="`transcript-${index}`">
-              <h3 v-if="block.type === 'heading'">{{ block.text }}</h3>
-              <p v-else-if="block.type === 'paragraph'">{{ block.text }}</p>
-              <ul v-else><li v-for="item in block.items" :key="item">{{ item }}</li></ul>
-            </template>
-          </div>
-          <p v-else class="content-empty">No transcript is available for this recording.</p>
-        </article>
-        <article class="content-panel summary-panel">
           <div class="section-heading"><div><span class="panel-kicker">Summary</span><span class="content-state">{{ selectedRecording.summary ? 'Available' : 'Not available' }}</span></div><button v-if="selectedRecording.summary" class="text-button" type="button" @click="copyText('summary', selectedRecording.summary)">{{ copiedSection === 'summary' ? 'Copied' : 'Copy' }}</button></div>
           <div v-if="summaryBlocks.length" class="rich-text">
             <template v-for="(block, index) in summaryBlocks" :key="`summary-${index}`">
@@ -368,6 +357,17 @@ onUnmounted(() => window.clearTimeout(toastTimer))
             </template>
           </div>
           <p v-else class="content-empty">No summary is available for this recording.</p>
+        </article>
+        <article class="content-panel summary-panel">
+          <div class="section-heading"><div><span class="panel-kicker">Summary from Custom Template</span><span class="content-state">{{ selectedRecording.customSummary ? 'Available' : 'Not available' }}</span></div><button v-if="selectedRecording.customSummary" class="text-button" type="button" @click="copyText('customSummary', selectedRecording.customSummary)">{{ copiedSection === 'customSummary' ? 'Copied' : 'Copy' }}</button></div>
+          <div v-if="customSummaryBlocks.length" class="rich-text">
+            <template v-for="(block, index) in customSummaryBlocks" :key="`custom-summary-${index}`">
+              <h3 v-if="block.type === 'heading'">{{ block.text }}</h3>
+              <p v-else-if="block.type === 'paragraph'">{{ block.text }}</p>
+              <ul v-else><li v-for="item in block.items" :key="item">{{ item }}</li></ul>
+            </template>
+          </div>
+          <p v-else class="content-empty">No custom summary is available for this recording.</p>
         </article>
       </section>
 
@@ -381,7 +381,7 @@ onUnmounted(() => window.clearTimeout(toastTimer))
           <label class="sort-field"><span>Sort by</span><select v-model="sortOrder"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="duration">Longest first</option></select></label>
           <label class="date-field"><span>From</span><input v-model="dateFrom" type="date" /></label>
           <label class="date-field"><span>To</span><input v-model="dateTo" type="date" /></label>
-          <label class="content-field"><span>Content</span><select v-model="contentFilter"><option value="all">All recordings</option><option value="transcript">Transcript ready</option><option value="summary">Summary ready</option><option value="missing">Missing both</option></select></label>
+          <label class="content-field"><span>Content</span><select v-model="contentFilter"><option value="all">All recordings</option><option value="summary">Summary ready</option><option value="customSummary">Custom summary ready</option><option value="missing">Missing both</option></select></label>
           <button class="reset-button" type="button" @click="resetFilters">Reset filters</button>
           <span class="result-count">{{ visibleRecordings.length }} of {{ recordings.length }} recordings</span>
         </section>

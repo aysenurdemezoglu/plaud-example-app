@@ -605,7 +605,7 @@ button {
 
 .content-grid {
     display: grid;
-    grid-template-columns: 1.35fr .65fr;
+    grid-template-columns: 1fr 1fr;
     gap: 1px;
     margin-bottom: 90px;
     background: var(--line);
